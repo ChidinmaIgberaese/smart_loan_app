@@ -1,0 +1,55 @@
+<h2>Loan Application Form</h2>
+<form method="POST">
+  {% csrf_token %}
+
+  <label for="name">Full Name:</label><br />
+  <input type="text" name="name" required /><br /><br />
+
+  <label for="age">Age:</label><br />
+  <input type="number" name="age" required /><br /><br />
+
+  <label for="income">Monthly Income (₦):</label><br />
+  <input type="number" name="income" required /><br /><br />
+
+  <label for="monthly_expenses">Monthly Expenses (₦):</label><br />
+  <input type="number" name="monthly_expenses" required /><br /><br />
+
+  <label for="loan_amount">Loan Amount Requested (₦):</label><br />
+  <input type="number" name="loan_amount" required /><br /><br />
+
+  <label for="repayment_duration">Repayment Duration:</label><br />
+  <select name="repayment_duration" required>
+    <option value="6_months">6 Months</option>
+    <option value="12_months">1 Year</option>
+    <option value="18_months">1.5 Years</option>
+    <option value="24_months">2 Years</option></select
+  ><br /><br />
+
+  <label for="guarantor_available">Guarantor Available:</label><br />
+  <select name="guarantor_available" required>
+    <option value="yes">Yes</option>
+    <option value="no">No</option></select
+  ><br /><br />
+
+  <label for="employment_status">Employment Status:</label><br />
+  <select name="employment_status" required>
+    <option value="employed">Employed</option>
+    <option value="self-employed">Self-Employed</option>
+    <option value="unemployed">Unemployed</option></select
+  ><br /><br />
+
+  <label for="business_type">Business Type (if applicable):</label><br />
+  <input
+    type="text"
+    name="business_type"
+    placeholder="e.g. POS, Hairdressing, Catering"
+  /><br /><br />
+
+  <label for="loan_purpose">Purpose of Loan:</label><br />
+  <input type="text" name="loan_purpose" required /><br /><br />
+
+  <label for="credit_score">Credit Score (if known):</label><br />
+  <input type="number" name="credit_score" /><br /><br />
+
+  <button type="submit">Apply Now</button>
+</form>

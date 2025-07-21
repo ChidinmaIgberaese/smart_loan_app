@@ -1,0 +1,70 @@
+<!-- mainapp/templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard - CrediScope AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-6">
+      <div class="bg-white shadow rounded p-6">
+        <h2 class="text-xl font-semibold mb-4">
+          Welcome, {{ request.user.username }}
+        </h2>
+        <form method="post">
+          {% csrf_token %}
+          <div class="grid grid-cols-2 gap-4">{{ form.as_p }}</div>
+          <button
+            class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Predict Credit Risk
+          </button>
+        </form>
+
+        {% if prediction %}
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold">Predicted Credit Risk:</h3>
+          <p class="text-2xl text-blue-600 font-bold">{{ prediction }}</p>
+        </div>
+
+        <div class="mt-6">
+          <canvas id="creditChart" width="400" height="200"></canvas>
+        </div>
+
+        <script>
+          const ctx = document.getElementById("creditChart").getContext("2d");
+          const chart = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+              labels: ["Low Risk", "Medium Risk", "High Risk"],
+              datasets: [
+                {
+                  label: "Credit Risk",
+                  data: [
+                    "{{ prediction }}" === "Low Risk" ? 1 : 0,
+                    "{{ prediction }}" === "Medium Risk" ? 1 : 0,
+                    "{{ prediction }}" === "High Risk" ? 1 : 0,
+                  ],
+                  backgroundColor: ["#22c55e", "#facc15", "#ef4444"],
+                },
+              ],
+            },
+            options: {
+              plugins: {
+                legend: {
+                  position: "bottom",
+                },
+              },
+            },
+          });
+        </script>
+        {% endif %}
+      </div>
+      <div class="text-right mt-4">
+        <a href="{% url 'logout' %}" class="text-red-500 underline">Logout</a>
+      </div>
+    </div>
+  </body>
+</html>
