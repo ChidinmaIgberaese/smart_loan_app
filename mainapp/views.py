@@ -41,20 +41,20 @@ def apply_loan(request):
         }
         repayment_duration_int = repayment_map.get(repayment_duration, 12)  # Default to 12 months
 
-        # Map employment_status to integer expected by model
+        # Mapping employment_status to integer expected by model
         employment_map = {"employed": 1, "self-employed": 2, "unemployed": 0}
         employment_int = employment_map.get(employment_status.lower(), 0)
 
-        # Map guarantor_available to boolean/int
+        # Mapping guarantor_available to boolean/int
         guarantor_int = 1 if guarantor_available.lower() == "yes" else 0
 
-        # Convert credit_score to float, default 0 if empty
+        # Converting credit_score to float, default 0 if empty
         try:
             credit_score_float = float(credit_score)
         except (TypeError, ValueError):
             credit_score_float = 0.0
 
-        # Prepare input array for model in correct order
+        # Preparing input array for model in correct order
         # **IMPORTANT**: The order here must match the order your model expects
         input_features = np.array([[
             age,
@@ -65,7 +65,7 @@ def apply_loan(request):
             guarantor_int,
             employment_int,
             credit_score_float
-            # You can add encoded business_type or loan_purpose here if model trained with them
+        
         ]])
 
         # Run prediction
@@ -91,16 +91,19 @@ def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         email = request.POST.get('email')
-        password = request.POST.get('password')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
 
-        if not User.objects.filter(username=username).exists():
-            User.objects.create_user(username=username, email=email, password=password)
-            return redirect('login')
-        else:
+        if password1 != password2:
+            return render(request, 'mainapp/register.html', {'error': 'Passwords do not match'})
+
+        if User.objects.filter(username=username).exists():
             return render(request, 'mainapp/register.html', {'error': 'Username already exists'})
-    
-    return render(request, 'mainapp/register.html')
 
+        User.objects.create_user(username=username, email=email, password=password1)
+        return redirect('login')
+
+    return render(request, 'mainapp/register.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -116,29 +119,70 @@ def login_view(request):
 
     return render(request, 'mainapp/login.html')
 
-
 @login_required
 def dashboard(request):
     prediction = None
     if request.method == 'POST':
         form = LoanForm(request.POST)
         if form.is_valid():
-            if model is not None:
-                data = form.cleaned_data
-                input_data = np.array([[data['monthly_income'], data['monthly_expenses'],
-                                        data['num_employees'], data['years_in_business'],
-                                        1 if data['defaulted_before'] == 'Yes' else 0]])
+            data = form.cleaned_data
 
-                pred = model.predict(input_data)[0]
+            # Numeric inputs
+            monthly_income = data['monthly_income']
+            monthly_expenses = data['monthly_expenses']
+            loan_amount = data['loan_amount']
+            age = data['age']
+
+            # Encode repayment_duration
+            repayment_map = {
+                '6_months': 6,
+                '12_months': 12,
+                '18_months': 18,
+                '24_months': 24
+            }
+            repayment_duration = repayment_map.get(data['repayment_duration'], 0)
+
+            # Encode guarantor_available
+            guarantor_available = 1 if data['guarantor_available'] == 'yes' else 0
+
+            # Encode employment_status
+            employment_map = {
+                'employed': 0,
+                'self-employed': 1,
+                'unemployed': 2
+            }
+            employment_status = employment_map.get(data['employment_status'], 0)
+
+            # Encode business_type as binary
+            business_type = 1 if data['business_type'] else 0
+
+            # Build feature array for model
+            input_features = np.array([[
+                monthly_income,
+                monthly_expenses,
+                loan_amount,
+                repayment_duration,
+                guarantor_available,
+                employment_status,
+                age,
+                business_type
+            ]])
+
+            # Check for NaN (optional)
+            if np.isnan(input_features).any():
+                prediction = "⚠️ Invalid input: missing values detected"
+            else:
+                pred = model.predict(input_features)[0]
                 label = {0: "High Risk", 1: "Medium Risk", 2: "Low Risk"}
                 prediction = label.get(pred, "Unknown")
-            else:
-                prediction = "⚠️ Model not found"
+
+        else:
+            prediction = "⚠️ Invalid form data"
+
     else:
         form = LoanForm()
 
     return render(request, 'mainapp/dashboard.html', {'form': form, 'prediction': prediction})
-
 
 def logout_view(request):
     logout(request)
