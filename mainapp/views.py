@@ -20,22 +20,68 @@ def home_view(request):
 
 def apply_loan(request):
     if request.method == "POST":
+        # Extract form data from the request POST dictionary
         age = int(request.POST.get("age"))
         income = float(request.POST.get("income"))
-        credit_score = float(request.POST.get("credit_score"))
-        employment_status = int(request.POST.get("employment_status"))
+        expenses = float(request.POST.get("monthly_expenses"))
+        loan_amount = float(request.POST.get("loan_amount"))
+        repayment_duration = request.POST.get("repayment_duration")  # map this to int months
+        guarantor_available = request.POST.get("guarantor_available")
+        employment_status = request.POST.get("employment_status")
+        business_type = request.POST.get("business_type", "")  # Optional string
+        loan_purpose = request.POST.get("loan_purpose", "")    # Optional string
+        credit_score = request.POST.get("credit_score")
 
-        model_path = os.path.join(os.path.dirname(__file__), 'credit_model.pkl')
-        model = joblib.load(model_path)
+        # Convert repayment_duration to integer number of months
+        repayment_map = {
+            "6_months": 6,
+            "12_months": 12,
+            "18_months": 18,
+            "24_months": 24,
+        }
+        repayment_duration_int = repayment_map.get(repayment_duration, 12)  # Default to 12 months
 
-        prediction = model.predict([[age, income, credit_score, employment_status]])
+        # Map employment_status to integer expected by model
+        employment_map = {"employed": 1, "self-employed": 2, "unemployed": 0}
+        employment_int = employment_map.get(employment_status.lower(), 0)
 
+        # Map guarantor_available to boolean/int
+        guarantor_int = 1 if guarantor_available.lower() == "yes" else 0
+
+        # Convert credit_score to float, default 0 if empty
+        try:
+            credit_score_float = float(credit_score)
+        except (TypeError, ValueError):
+            credit_score_float = 0.0
+
+        # Prepare input array for model in correct order
+        # **IMPORTANT**: The order here must match the order your model expects
+        input_features = np.array([[
+            age,
+            income,
+            expenses,
+            loan_amount,
+            repayment_duration_int,
+            guarantor_int,
+            employment_int,
+            credit_score_float
+            # You can add encoded business_type or loan_purpose here if model trained with them
+        ]])
+
+        # Run prediction
+        prediction = model.predict(input_features)
+
+        # Interpret prediction result (adjust based on your model's output scheme)
         if prediction[0] == 1:
-            return render(request, "mainapp/loan_success_new.html", {"message": "Loan Approved ✅"})
+            message = "Loan Approved ✅"
         else:
-            return render(request, "mainapp/loan_success_new.html", {"message": "Loan Denied ❌"})
+            message = "Loan Denied ❌"
 
+        return render(request, "mainapp/loan_success_new.html", {"message": message})
+
+    # If GET, just render the form
     return render(request, "mainapp/loan_form.html")
+
 
 def loan_success(request):
     return render(request, "mainapp/loan_success_new.html")
