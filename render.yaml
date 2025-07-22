@@ -1,9 +1,13 @@
 services:
   - type: web
-    name: crediscope-ai
+    name: crediscope-django
     env: python
-    buildCommand: ""
-    startCommand: gunicorn crediscope_ai.wsgi:application
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn crediScope_ai.wsgi"
     envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: crediscope_ai.settings
+      - key: DJANGO_SECRET_KEY
+        value: your-secret-key
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: yourdomain.onrender.com
