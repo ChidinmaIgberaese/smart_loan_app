@@ -29,7 +29,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1',  'https://smart-loan-app.onrender.com']
+ALLOWED_HOSTS = ['smart-loan-app.onrender.com', 'localhost', '127.0.0.1']
+
 
 
 # Application definition
